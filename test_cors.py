@@ -20,7 +20,21 @@ def start_server():
         stderr=subprocess.PIPE,
         cwd=os.path.dirname(os.path.abspath(__file__))
     )
-    time.sleep(5)  # Wait for server to start
+    
+    # Wait for server to be ready with health check polling
+    max_retries = 20
+    retry_delay = 0.5
+    for attempt in range(max_retries):
+        try:
+            response = requests.get("http://localhost:5000/health", timeout=2)
+            if response.status_code == 200:
+                print(f"Server ready after {(attempt + 1) * retry_delay:.1f}s")
+                return server_process
+        except requests.exceptions.RequestException:
+            pass
+        time.sleep(retry_delay)
+    
+    raise RuntimeError("Server failed to start within expected time")
     return server_process
 
 def test_cors_null_origin():
@@ -153,9 +167,12 @@ def main():
             server_process.terminate()
             try:
                 server_process.wait(timeout=5)
+                print("Server stopped gracefully")
             except subprocess.TimeoutExpired:
+                print("Server termination timed out, force killing...")
                 server_process.kill()
-            print("Server stopped")
+                server_process.wait()
+                print("Server force stopped")
 
 if __name__ == "__main__":
     sys.exit(main())
