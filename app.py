@@ -25,7 +25,7 @@ import requests
 import os
 from dotenv import load_dotenv
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 from functools import wraps
 
@@ -46,9 +46,11 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # CORS Configuration (restrict to localhost for security)
+# Allow 'null' origin for local file:// access (when opening dashboard.html directly)
 CORS(app, resources={
     r"/*": {
         "origins": [
+            "null",  # Allow local file:// access
             "http://localhost:*",
             "http://127.0.0.1:*",
             "http://localhost:5500",
@@ -174,7 +176,7 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'service': 'Phoenix v12.2 API Server',
-        'timestamp': datetime.utcnow().isoformat(),
+        'timestamp': datetime.now(timezone.utc).isoformat(),
         'version': '12.2',
         'endpoints': [
             '/get-options-data',
