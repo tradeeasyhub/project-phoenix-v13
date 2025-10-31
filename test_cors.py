@@ -14,6 +14,7 @@ import os
 # Configuration
 SERVER_PORT = 5000
 SERVER_BASE_URL = f"http://localhost:{SERVER_PORT}"
+SHUTDOWN_TIMEOUT = 5  # seconds
 
 def start_server():
     """Start the Flask server in the background"""
@@ -169,7 +170,7 @@ def main():
             print("\n\nStopping Flask server...")
             server_process.terminate()
             try:
-                server_process.wait(timeout=5)
+                server_process.wait(timeout=SHUTDOWN_TIMEOUT)
                 print("Server stopped gracefully")
             except subprocess.TimeoutExpired:
                 print("Server termination timed out, force killing...")

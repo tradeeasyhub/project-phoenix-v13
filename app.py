@@ -47,6 +47,9 @@ app = Flask(__name__)
 
 # CORS Configuration (restrict to localhost for security)
 # Allow 'null' origin for local file:// access (when opening dashboard.html directly)
+# SECURITY NOTE: 'null' origin allows any file:// request. This is safe for local development
+# where the dashboard is opened from the filesystem, but should be removed in production
+# deployments where the dashboard is served over HTTP/HTTPS.
 CORS(app, resources={
     r"/*": {
         "origins": [
