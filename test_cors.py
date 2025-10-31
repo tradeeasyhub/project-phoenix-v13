@@ -35,7 +35,6 @@ def start_server():
         time.sleep(retry_delay)
     
     raise RuntimeError("Server failed to start within expected time")
-    return server_process
 
 def test_cors_null_origin():
     """Test CORS with null origin (file:// access)"""
