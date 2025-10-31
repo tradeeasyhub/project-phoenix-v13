@@ -25,7 +25,7 @@ import requests
 import os
 from dotenv import load_dotenv
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 from functools import wraps
 
@@ -46,9 +46,14 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # CORS Configuration (restrict to localhost for security)
+# Allow 'null' origin for local file:// access (when opening dashboard.html directly)
+# SECURITY NOTE: 'null' origin allows any file:// request. This is safe for local development
+# where the dashboard is opened from the filesystem, but should be removed in production
+# deployments where the dashboard is served over HTTP/HTTPS.
 CORS(app, resources={
     r"/*": {
         "origins": [
+            "null",  # Allow local file:// access
             "http://localhost:*",
             "http://127.0.0.1:*",
             "http://localhost:5500",
@@ -107,6 +112,13 @@ def validate_symbol(symbol):
         return False
     # Allow alphanumeric symbols (e.g., BTCUSDT, ETHUSDT)
     return symbol.isalnum() and len(symbol) >= 4 and len(symbol) <= 20
+
+def validate_options_symbol(symbol):
+    """Validate options base symbol format (e.g., BTC, ETH, SOL)"""
+    if not symbol or not isinstance(symbol, str):
+        return False
+    # Options symbols are typically 2-5 characters (BTC, ETH, SOL, DOGE, etc.)
+    return symbol.isalnum() and len(symbol) >= 2 and len(symbol) <= 10
 
 def handle_binance_error(response):
     """Handle Binance API error responses"""
@@ -174,7 +186,7 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'service': 'Phoenix v12.2 API Server',
-        'timestamp': datetime.utcnow().isoformat(),
+        'timestamp': datetime.now(timezone.utc).isoformat(),
         'version': '12.2',
         'endpoints': [
             '/get-options-data',
@@ -209,11 +221,11 @@ def get_options_data():
                 'message': 'Symbol parameter is required'
             }), 400
         
-        if not validate_symbol(symbol):
-            logger.warning(f"Invalid symbol format: {symbol}")
+        if not validate_options_symbol(symbol):
+            logger.warning(f"Invalid options symbol format: {symbol}")
             return jsonify({
                 'error': True,
-                'message': 'Invalid symbol format'
+                'message': 'Invalid symbol format. Expected base asset symbol (e.g., BTC, ETH, SOL)'
             }), 400
         
         logger.info(f"Fetching options data for symbol: {symbol}")
