@@ -97,7 +97,8 @@ def test_endpoints():
     print("\n=== Testing API Endpoints ===")
     endpoints = [
         "/health",
-        "/get-options-data?symbol=BTCUSDT",
+        "/get-options-data?symbol=BTC",  # Test 3-char symbol (base asset)
+        "/get-options-data?symbol=BTCUSDT",  # Test full pair symbol
         "/api/binance/funding?symbol=BTCUSDT",
         "/api/binance/oi?symbol=BTCUSDT",
         "/api/binance/lsratio?symbol=BTCUSDT&period=5m&limit=1"
@@ -115,6 +116,16 @@ def test_endpoints():
             # Check CORS header is present
             cors_header = response.headers.get("Access-Control-Allow-Origin")
             if cors_header == "null":
+                # For options endpoint, also check it's not rejecting with 400 "Invalid symbol format"
+                if "/get-options-data" in endpoint and response.status_code == 400:
+                    try:
+                        error_data = response.json()
+                        if "Invalid symbol format" in error_data.get("message", ""):
+                            print(f"✗ {endpoint} - Symbol validation failed")
+                            all_passed = False
+                            continue
+                    except:
+                        pass
                 print(f"✓ {endpoint} - CORS enabled")
             else:
                 print(f"✗ {endpoint} - CORS header missing or incorrect")

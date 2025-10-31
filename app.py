@@ -113,6 +113,13 @@ def validate_symbol(symbol):
     # Allow alphanumeric symbols (e.g., BTCUSDT, ETHUSDT)
     return symbol.isalnum() and len(symbol) >= 4 and len(symbol) <= 20
 
+def validate_options_symbol(symbol):
+    """Validate options base symbol format (e.g., BTC, ETH, SOL)"""
+    if not symbol or not isinstance(symbol, str):
+        return False
+    # Options symbols are typically 2-5 characters (BTC, ETH, SOL, DOGE, etc.)
+    return symbol.isalnum() and len(symbol) >= 2 and len(symbol) <= 10
+
 def handle_binance_error(response):
     """Handle Binance API error responses"""
     try:
@@ -214,11 +221,11 @@ def get_options_data():
                 'message': 'Symbol parameter is required'
             }), 400
         
-        if not validate_symbol(symbol):
-            logger.warning(f"Invalid symbol format: {symbol}")
+        if not validate_options_symbol(symbol):
+            logger.warning(f"Invalid options symbol format: {symbol}")
             return jsonify({
                 'error': True,
-                'message': 'Invalid symbol format'
+                'message': 'Invalid symbol format. Expected base asset symbol (e.g., BTC, ETH, SOL)'
             }), 400
         
         logger.info(f"Fetching options data for symbol: {symbol}")
