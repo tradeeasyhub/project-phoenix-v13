@@ -11,13 +11,17 @@ import sys
 import signal
 import os
 
+# Configuration
+SERVER_PORT = 5000
+SERVER_BASE_URL = f"http://localhost:{SERVER_PORT}"
+
 def start_server():
     """Start the Flask server in the background"""
     print("Starting Flask server...")
     server_process = subprocess.Popen(
         [sys.executable, "app.py"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
         cwd=os.path.dirname(os.path.abspath(__file__))
     )
     
@@ -26,7 +30,7 @@ def start_server():
     retry_delay = 0.5
     for attempt in range(max_retries):
         try:
-            response = requests.get("http://localhost:5000/health", timeout=2)
+            response = requests.get(f"{SERVER_BASE_URL}/health", timeout=2)
             if response.status_code == 200:
                 print(f"Server ready after {(attempt + 1) * retry_delay:.1f}s")
                 return server_process
@@ -41,7 +45,7 @@ def test_cors_null_origin():
     print("\n=== Testing CORS with 'null' origin ===")
     try:
         response = requests.get(
-            "http://localhost:5000/health",
+            f"{SERVER_BASE_URL}/health",
             headers={"Origin": "null"}
         )
         
@@ -69,7 +73,7 @@ def test_cors_localhost_origin():
     print("\n=== Testing CORS with 'localhost' origin ===")
     try:
         response = requests.get(
-            "http://localhost:5000/health",
+            f"{SERVER_BASE_URL}/health",
             headers={"Origin": "http://localhost:5500"}
         )
         
@@ -102,7 +106,7 @@ def test_endpoints():
     for endpoint in endpoints:
         try:
             response = requests.get(
-                f"http://localhost:5000{endpoint}",
+                f"{SERVER_BASE_URL}{endpoint}",
                 headers={"Origin": "null"},
                 timeout=5
             )
